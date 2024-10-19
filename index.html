@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open-rhythm</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Modak&display=swap" rel="stylesheet">
+    <style>
+        canvas {
+            border: 2px solid black;
+            display: block;
+            margin: auto;
+            background-image: url('media/sprites/bg.jpg');
+        }
+
+        #score {
+            text-align: center;
+            font-size: 24px;
+            color: black;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas" width="1024" height="768"></canvas>
+    <div id="score">Score: 0</div>
+
+    <audio id="music1">
+        <source src="media/musics/music1.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
