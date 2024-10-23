@@ -8,12 +8,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Modak&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        canvas {
-            border: 2px solid black;
-            display: block;
-            margin: auto;
+        body {
+            margin: 0;
+            overflow: hidden;
             background-image: url('media/sprites/bg.jpg');
+            background-position: center center;
+            background-size: cover;
         }
 
         #score {
@@ -27,7 +31,6 @@
 
 <body>
     <canvas id="gameCanvas" width="1024" height="768"></canvas>
-    <div id="score">Score: 0</div>
 
     <audio id="music1">
         <source src="media/musics/music1.mp3" type="audio/mpeg">
