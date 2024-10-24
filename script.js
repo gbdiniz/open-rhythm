@@ -43,7 +43,7 @@ let keys = {};   // Para registrar teclas pressionadas
 let hitTolerance = 60;  // Tolerância de colisão para acerto
 let hitLineY = canvas.height / 1.2;  // Linha onde o jogador deve acertar as notas
 
-let life = 100;
+let life = 70;
 
 let feedback = [];  // Para armazenar o feedback de precisão ("Perfect", "Good", etc.)
 let feedbackDuration = 400;  // Duração do feedback na tela (ms)
@@ -124,9 +124,10 @@ function startGame() {
     document.getElementById("initialScreen").style.display = "none";
     document.getElementById("finalScreen").style.display = "none";
     document.getElementById("gameCanvas").style.opacity = 1;
+    document.getElementById("gameCanvas").style.display = "flex";
     gameOnAction = true;
     score = 0;
-    life = 100;
+    life = 70;
     music.currentTime = 0
     music.play();
     gameLoop();
@@ -142,7 +143,7 @@ document.getElementById("playAgain").addEventListener("click", () => {
     music.play();
     gameOnAction = true;
     score = 0;
-    life = 100;
+    life = 70;
 });
 
 // Função para desenhar as notas
@@ -457,11 +458,11 @@ function checkHit(direction, timestamp) {
                 }
                 notes.splice(index, 1);  // Remove a nota acertada
                 hit = true;
-                if (life <= 95) {
+                if (life <= 65) {
                     life += 5;
                 }
-                if (life > 95 && life <= 100) {
-                    life += 100 - life;
+                if (life > 65 && life <= 70) {
+                    life += 70 - life;
                 }
             }
         }
