@@ -37,7 +37,6 @@
             background-position: bottom center;
             background-repeat: no-repeat;
             background-size: cover;
-            display: none;
         }
 
         @font-face {
@@ -114,7 +113,9 @@
 </head>
 
 <body>
-    <canvas id="gameCanvas"></canvas>
+    <div id="gameDiv" style="display: none;">
+        <canvas id="gameCanvas"></canvas>
+    </div>
 
     <div id="initialScreen" class="center">
         <h1>Hit Mind</h1>

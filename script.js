@@ -123,8 +123,8 @@ loadFrames('arrowRightPressedNull', 2, 'media/sprites/arrows/arrowRightPressedNu
 function startGame() {
     document.getElementById("initialScreen").style.display = "none";
     document.getElementById("finalScreen").style.display = "none";
-    document.getElementById("gameCanvas").style.opacity = 1;
-    document.getElementById("gameCanvas").style.display = "flex";
+    document.getElementById("gameDiv").style.opacity = 1;
+    document.getElementById("gameDiv").style.display = "flex";
     gameOnAction = true;
     score = 0;
     life = 70;
@@ -137,7 +137,8 @@ document.getElementById("play").onclick = startGame;
 document.getElementById("playAgain").addEventListener("click", () => {
     document.getElementById("initialScreen").style.display = "none";
     document.getElementById("finalScreen").style.display = "none";
-    document.getElementById("gameCanvas").style.opacity = 1;
+    document.getElementById("gameDiv").style.opacity = 1;
+    document.getElementById("gameDiv").style.display = "flex";
     nextNoteIndex = 0;
     music.currentTime = 0;
     music.play();
@@ -518,7 +519,7 @@ function endGame(result) {
 
     document.getElementById("finalScore").innerText = `Pontuação: ${score}`;
 
-    document.getElementById("gameCanvas").style.opacity = 0;
+    document.getElementById("gameDiv").style.opacity = 0;
     document.getElementById("finalScreen").style.display = "flex";
 }
 
