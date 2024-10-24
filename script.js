@@ -124,7 +124,7 @@ function startGame() {
     document.getElementById("initialScreen").style.display = "none";
     document.getElementById("finalScreen").style.display = "none";
     document.getElementById("gameCanvas").style.opacity = 1;
-    document.getElementById("gameCanvas").style.display = "block";
+    document.getElementById("gameCanvas").style.display = "flex";
     gameOnAction = true;
     score = 0;
     life = 70;
