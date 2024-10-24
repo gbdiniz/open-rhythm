@@ -2,6 +2,8 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+let gameOnAction = false;
+
 function ajustarCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -16,6 +18,8 @@ window.addEventListener('resize', ajustarCanvas);
 const frameDuration = 100;
 
 let score = 0;
+
+let maxPossibleScore = 139500;
 let notes = [];  // Armazena as notas
 
 const arrows = {
@@ -36,8 +40,10 @@ let hit;
 
 let speed = 6;   // Velocidade de descida das notas
 let keys = {};   // Para registrar teclas pressionadas
-let hitTolerance = 30;  // Tolerância de colisão para acerto
+let hitTolerance = 60;  // Tolerância de colisão para acerto
 let hitLineY = canvas.height / 1.2;  // Linha onde o jogador deve acertar as notas
+
+let life = 100;
 
 let feedback = [];  // Para armazenar o feedback de precisão ("Perfect", "Good", etc.)
 let feedbackDuration = 400;  // Duração do feedback na tela (ms)
@@ -48,19 +54,31 @@ let xLeftPos = xPos - 100;
 let xDownPos = xPos - 35;
 let xUpPos = xPos + 35;
 let xRightPos = xPos + 100;
-const textSpeed = 2;
+
+const playerSizeX = 410; const playerSizeY = 410;
+
+const opponentSizeX = 350; const opponentSizeY = 337.5;
 
 let nextNoteIndex = 0;  // Controla qual nota será gerada a seguir
 
 // Carregar a música
 const music = new Audio('media/musics/music2.mp3');
 
+const missNote1 = new Audio('media/sounds/missnote1.ogg');
+const missNote2 = new Audio('media/sounds/missnote2.ogg');
+const missNote3 = new Audio('media/sounds/missnote3.ogg');
+
 const animations = {
-    idle: { frames: [], currentFrame: 0, lastFrameTime: 0 },
-    up: { frames: [], currentFrame: 0, lastFrameTime: 0 },
-    down: { frames: [], currentFrame: 0, lastFrameTime: 0 },
-    left: { frames: [], currentFrame: 0, lastFrameTime: 0 },
-    right: { frames: [], currentFrame: 0, lastFrameTime: 0 },
+    playerIdle: { frames: [], currentFrame: 0, lastFrameTime: 0 },
+    playerUp: { frames: [], currentFrame: 0, lastFrameTime: 0 },
+    playerDown: { frames: [], currentFrame: 0, lastFrameTime: 0 },
+    playerLeft: { frames: [], currentFrame: 0, lastFrameTime: 0 },
+    playerRight: { frames: [], currentFrame: 0, lastFrameTime: 0 },
+    opponentIdle: { frames: [], currentFrame: 0, lastFrameTime: 0 },
+    opponentUp: { frames: [], currentFrame: 0, lastFrameTime: 0 },
+    opponentDown: { frames: [], currentFrame: 0, lastFrameTime: 0 },
+    opponentLeft: { frames: [], currentFrame: 0, lastFrameTime: 0 },
+    opponentRight: { frames: [], currentFrame: 0, lastFrameTime: 0 },
     arrowUpPressed: { frames: [], currentFrame: 0, lastFrameTime: 0 },
     arrowDownPressed: { frames: [], currentFrame: 0, lastFrameTime: 0 },
     arrowLeftPressed: { frames: [], currentFrame: 0, lastFrameTime: 0 },
@@ -79,11 +97,17 @@ function loadFrames(animationName, frameCount, filePath) {
     }
 }
 
-loadFrames('idle', 5, 'media/sprites/player/player2/player');
-loadFrames('up', 2, 'media/sprites/player/player2/player_up');
-loadFrames('down', 2, 'media/sprites/player/player2/player_down');
-loadFrames('left', 2, 'media/sprites/player/player2/player_left');
-loadFrames('right', 2, 'media/sprites/player/player2/player_right');
+loadFrames('playerIdle', 5, 'media/sprites/player/player2/player');
+loadFrames('playerUp', 2, 'media/sprites/player/player2/player_up');
+loadFrames('playerDown', 2, 'media/sprites/player/player2/player_down');
+loadFrames('playerLeft', 2, 'media/sprites/player/player2/player_left');
+loadFrames('playerRight', 2, 'media/sprites/player/player2/player_right');
+
+loadFrames('opponentIdle', 1, 'media/sprites/opponent/opponent');
+loadFrames('opponentUp', 1, 'media/sprites/opponent/opponent_up');
+loadFrames('opponentDown', 1, 'media/sprites/opponent/opponent_down');
+loadFrames('opponentLeft', 1, 'media/sprites/opponent/opponent_left');
+loadFrames('opponentRight', 1, 'media/sprites/opponent/opponent_right');
 
 loadFrames('arrowUpPressed', 2, 'media/sprites/arrows/arrowUpPressed');
 loadFrames('arrowDownPressed', 2, 'media/sprites/arrows/arrowDownPressed');
@@ -97,18 +121,36 @@ loadFrames('arrowRightPressedNull', 2, 'media/sprites/arrows/arrowRightPressedNu
 
 // Iniciar o jogo e tocar a música
 function startGame() {
+    document.getElementById("initialScreen").style.display = "none";
+    document.getElementById("finalScreen").style.display = "none";
+    document.getElementById("gameCanvas").style.opacity = 1;
+    gameOnAction = true;
+    score = 0;
+    life = 100;
+    music.currentTime = 0
     music.play();
     gameLoop();
 }
 
-document.getElementById("gameCanvas").onclick = startGame;
+document.getElementById("play").onclick = startGame;
+document.getElementById("playAgain").addEventListener("click", () => {
+    document.getElementById("initialScreen").style.display = "none";
+    document.getElementById("finalScreen").style.display = "none";
+    document.getElementById("gameCanvas").style.opacity = 1;
+    nextNoteIndex = 0;
+    music.currentTime = 0;
+    music.play();
+    gameOnAction = true;
+    score = 0;
+    life = 100;
+});
 
 // Função para desenhar as notas
 function drawNotes(timestamp) {
     notes.forEach(note => {
         let currentAnimation;
         if (note.direction == 'left' && hit == true) {
-            if (keys['a']) {
+            if (keys['ArrowLeft'] || keys['a']) {
                 currentAnimation = animations.arrowLeftPressed;
 
                 if (timestamp - currentAnimation.lastFrameTime > frameDuration) {
@@ -123,7 +165,7 @@ function drawNotes(timestamp) {
                 ctx.drawImage(note.img, note.x, note.y, arrowSizeX, arrowSizeY);
             }
         } else if (note.direction == 'up' && hit == true) {
-            if (keys['w']) {
+            if (keys['ArrowUp'] || keys['w']) {
                 currentAnimation = animations.arrowUpPressed;
 
                 if (timestamp - currentAnimation.lastFrameTime > frameDuration) {
@@ -138,7 +180,7 @@ function drawNotes(timestamp) {
                 ctx.drawImage(note.img, note.x, note.y, arrowSizeX, arrowSizeY);
             }
         } else if (note.direction == 'down' && hit == true) {
-            if (keys['s']) {
+            if (keys['ArrowDown'] || keys['s']) {
                 currentAnimation = animations.arrowDownPressed;
 
                 if (timestamp - currentAnimation.lastFrameTime > frameDuration) {
@@ -153,7 +195,7 @@ function drawNotes(timestamp) {
                 ctx.drawImage(note.img, note.x, note.y, arrowSizeX, arrowSizeY);
             }
         } else if (note.direction == 'right' && hit == true) {
-            if (keys['d']) {
+            if (keys['ArrowRight'] || keys['d']) {
                 currentAnimation = animations.arrowRightPressed;
 
                 if (timestamp - currentAnimation.lastFrameTime > frameDuration) {
@@ -194,6 +236,20 @@ function spawnNote(direction) {
     notes.push(note);
 }
 
+function chooseMissSound() {
+    let selection = Math.floor(Math.random() * 3) + 1;
+
+    if (selection == 1) {
+        missNote1.play();
+    } else if (selection == 2) {
+        missNote2.play();
+
+    } else {
+        missNote3.play();
+
+    }
+}
+
 // Função para mover as notas
 function moveNotes() {
     notes.forEach((note, index) => {
@@ -202,6 +258,8 @@ function moveNotes() {
             score -= 50;  // Adicionar à pontuação
             notes.splice(index, 1);  // Remover a nota se sair da tela
             registerFeedback('Errou!', note.x); // Feedback se a nota sair da tela sem ser tocada
+            chooseMissSound();
+            life -= 5;
         }
     });
 }
@@ -212,7 +270,7 @@ function drawHitLine(timestamp) {
         let currentAnimation;
         switch (keyNote) {
             case arrows.left:
-                if (keys['a']) {
+                if (keys['ArrowLeft'] || keys['a']) {
                     currentAnimation = animations.arrowLeftPressedNull;
 
                     if (timestamp - currentAnimation.lastFrameTime > frameDuration) {
@@ -228,7 +286,7 @@ function drawHitLine(timestamp) {
                 break;
 
             case arrows.down:
-                if (keys['s']) {
+                if (keys['ArrowDown'] || keys['s']) {
                     currentAnimation = animations.arrowDownPressedNull;
 
                     if (timestamp - currentAnimation.lastFrameTime > frameDuration) {
@@ -244,7 +302,7 @@ function drawHitLine(timestamp) {
                 break;
 
             case arrows.up:
-                if (keys['w']) {
+                if (keys['ArrowUp'] || keys['w']) {
                     currentAnimation = animations.arrowUpPressedNull;
 
                     if (timestamp - currentAnimation.lastFrameTime > frameDuration) {
@@ -253,6 +311,7 @@ function drawHitLine(timestamp) {
                     }
 
                     ctx.drawImage(currentAnimation.frames[currentAnimation.currentFrame], xUpPos, canvas.height / 1.2, arrowSizeX, arrowSizeY);
+                    // missNote1.play();
                 } else {
 
                     ctx.drawImage(arrows.up, xUpPos, canvas.height / 1.2, arrowSizeX, arrowSizeY);
@@ -260,7 +319,7 @@ function drawHitLine(timestamp) {
                 break;
 
             case arrows.right:
-                if (keys['d']) {
+                if (keys['ArrowRight'] || keys['d']) {
                     currentAnimation = animations.arrowRightPressedNull;
 
                     if (timestamp - currentAnimation.lastFrameTime > frameDuration) {
@@ -269,6 +328,8 @@ function drawHitLine(timestamp) {
                     }
 
                     ctx.drawImage(currentAnimation.frames[currentAnimation.currentFrame], xRightPos, canvas.height / 1.2, arrowSizeX, arrowSizeY);
+
+                    // missNote1.play();
                 } else {
 
                     ctx.drawImage(arrows.right, xRightPos, canvas.height / 1.2, arrowSizeX, arrowSizeY);
@@ -280,12 +341,12 @@ function drawHitLine(timestamp) {
 }
 
 function drawPlayer(timestamp) {
-    let currentAnimation = animations.idle;
+    let currentAnimation = animations.playerIdle;
 
-    if (keys['w']) currentAnimation = animations.up;
-    else if (keys['s']) currentAnimation = animations.down;
-    else if (keys['a']) currentAnimation = animations.left;
-    else if (keys['d']) currentAnimation = animations.right;
+    if (keys['ArrowUp'] || keys['w']) currentAnimation = animations.playerUp;
+    else if (keys['ArrowDown'] || keys['s']) currentAnimation = animations.playerDown;
+    else if (keys['ArrowLeft'] || keys['a']) currentAnimation = animations.playerLeft;
+    else if (keys['ArrowRight'] || keys['d']) currentAnimation = animations.playerRight;
 
     // Controle de tempo da animação
     if (timestamp - currentAnimation.lastFrameTime > frameDuration) {
@@ -293,12 +354,76 @@ function drawPlayer(timestamp) {
         currentAnimation.lastFrameTime = timestamp;
     }
 
-    ctx.drawImage(currentAnimation.frames[currentAnimation.currentFrame], canvas.width / 1.2 - currentAnimation.frames[currentAnimation.currentFrame].width / 1.2, canvas.height / 1.3 - currentAnimation.frames[currentAnimation.currentFrame].height / 1.3, 410, 410);
+    const radius = 100;
 
+    ctx.beginPath();
+    ctx.ellipse(canvas.width / 1.2 - radius, canvas.height / 1.3 + radius / 1.3, radius * 2, radius, 0, 0, 360);
+    ctx.fillStyle = 'gray';
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'black';
+    ctx.stroke();
+
+    ctx.drawImage(currentAnimation.frames[currentAnimation.currentFrame], canvas.width / 1.2 - currentAnimation.frames[currentAnimation.currentFrame].width / 1.2, canvas.height / 1.3 - currentAnimation.frames[currentAnimation.currentFrame].height / 1.3, playerSizeX, playerSizeY);
+
+    // ctx.drawImage(opponentIdle, canvas.width / 1.2 - opponentIdle.width / 1.2, canvas.height / 1.3 - opponentIdle.height / 1.3, opponentSizeX, opponentSizeY)
 }
 
-function drawLife() {
+function drawOpponent(timestamp) {
+    let currentAnimation = animations.opponentIdle;
 
+    let animationSet = false;
+
+    notes.forEach((note) => {
+        let distance = Math.abs(note.y - hitLineY);
+
+        if (distance < hitTolerance) {
+            // Escolhe a animação com base na direção da nota
+            switch (note.direction) {
+                case 'left':
+                    currentAnimation = animations.opponentLeft;
+                    break;
+                case 'right':
+                    currentAnimation = animations.opponentRight;
+                    break;
+                case 'up':
+                    currentAnimation = animations.opponentUp;
+                    break;
+                case 'down':
+                    currentAnimation = animations.opponentDown;
+                    break;
+                default:
+                    currentAnimation = animations.opponentIdle;
+                    break;
+            }
+
+            // Atualiza o frame da animação se necessário
+            if (timestamp - currentAnimation.lastFrameTime > frameDuration) {
+                currentAnimation.currentFrame = (currentAnimation.currentFrame + 1) % currentAnimation.frames.length;
+                currentAnimation.lastFrameTime = timestamp;
+            }
+
+            animationSet = true; // Marca que uma animação foi definida
+        }
+    });
+
+    // Se nenhuma animação foi definida, mantém o oponente em idle
+    if (!animationSet) {
+        currentAnimation = animations.opponentIdle;
+    }
+
+    const radius = 70;
+
+    ctx.beginPath();
+    ctx.ellipse(canvas.width / 9 + opponentSizeX / 2, canvas.height / 4 + opponentSizeY - radius - 30, radius * 2, radius, 0, 0, 360);
+    ctx.fillStyle = 'gray';
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'black';
+    ctx.stroke();
+
+    // Desenha a animação atual
+    ctx.drawImage(currentAnimation.frames[currentAnimation.currentFrame], canvas.width / 9 - currentAnimation.frames[currentAnimation.currentFrame].width / 9, canvas.height / 4 - currentAnimation.frames[currentAnimation.currentFrame].height / 4, opponentSizeX, opponentSizeY);
 }
 
 // Função para registrar o feedback de precisão
@@ -323,7 +448,7 @@ function checkHit(direction, timestamp) {
                 if (distance < 10) {
                     registerFeedback('Brabo!', note.x);
                     score += 300;
-                } else if (distance < 20) {
+                } else if (distance < 30) {
                     registerFeedback('Boa', note.x);
                     score += 200;
                 } else {
@@ -332,12 +457,20 @@ function checkHit(direction, timestamp) {
                 }
                 notes.splice(index, 1);  // Remove a nota acertada
                 hit = true;
+                if (life <= 95) {
+                    life += 5;
+                }
+                if (life > 95 && life <= 100) {
+                    life += 100 - life;
+                }
             }
         }
     });
     if (!hit) {
         registerFeedback('Errou!', direction === 'left' ? 100 : direction === 'down' ? 250 : direction === 'up' ? 400 : 550);
         score -= 50;  // Penalidade se apertar sem acertar nota
+        life -= 5;
+        chooseMissSound();
 
     }
 }
@@ -369,13 +502,34 @@ function drawFeedback() {
     });
 }
 
+function endGame(result) {
+    // window.location.reload();
+    notes = [];
+    music.pause();
+
+    gameOnAction = false;
+
+    if (result == 0) {
+        document.getElementById("finalTitle").innerText = "Você perdeu!";
+    } else {
+        document.getElementById("finalTitle").innerText = "Você ganhou!";
+    }
+
+    document.getElementById("finalScore").innerText = `Pontuação: ${score}`;
+
+    document.getElementById("gameCanvas").style.opacity = 0;
+    document.getElementById("finalScreen").style.display = "flex";
+}
+
 // Função para detectar as teclas
 document.addEventListener('keydown', (event) => {
     keys[event.key] = true;
-    if (event.key === 'a') checkHit('left');
-    if (event.key === 's') checkHit('down');
-    if (event.key === 'w') checkHit('up');
-    if (event.key === 'd') checkHit('right');
+    if (gameOnAction) {
+        if (event.key === 'ArrowLeft' || event.key === 'a') checkHit('left');
+        if (event.key === 'ArrowDown' || event.key === 's') checkHit('down');
+        if (event.key === 'ArrowUp' || event.key === 'w') checkHit('up');
+        if (event.key === 'ArrowRight' || event.key === 'd') checkHit('right');
+    }
 });
 
 document.addEventListener('keyup', (event) => {
@@ -391,6 +545,7 @@ function gameLoop(timestamp) {
     drawNotes(timestamp);  // Desenhar as notas
     drawFeedback();  // Desenhar o feedback de precisão
     drawPlayer(timestamp);
+    drawOpponent(timestamp);
 
     // Exibir a pontuação
     // document.getElementById('score').innerText = 'Score: ' + score;
@@ -404,11 +559,22 @@ function gameLoop(timestamp) {
 
     ctx.fillText(`Pontuação: ${score}`, canvas.width / 2, canvas.height / 1.05);
 
+    ctx.fillText(`Vida: ${life}`, canvas.width / 2, canvas.height / 1.01);
+
     // Sincronizar as notas com a batida da música
     if (nextNoteIndex < beatMap.length && music.currentTime * 1000 >= beatMap[nextNoteIndex].time) {
         spawnNote(beatMap[nextNoteIndex].direction);  // Criar nota na direção especificada
         nextNoteIndex++;  // Avançar para a próxima nota da lista
     }
+
+
+    if (life <= 0) {
+        endGame(0);
+    }
+
+    music.addEventListener("ended", function () {
+        endGame(1);
+    });
 
     requestAnimationFrame(gameLoop);
 }

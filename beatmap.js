@@ -464,5 +464,4 @@ const beatMap = [
     { time: 141419, direction: 'up' },
     { time: 141794, direction: 'left' },
     { time: 142044, direction: 'right' },
-    // Adicione mais tempos conforme necessário
 ];

@@ -4,13 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open-rhythm</title>
+    <title>Hit-Mind</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Modak&display=swap" rel="stylesheet">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
     <style>
         body {
             margin: 0;
@@ -18,6 +25,73 @@
             background-image: url('media/sprites/bg.jpg');
             background-position: center center;
             background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @font-face {
+            font-family: 'Super Funky';
+            font-style: normal;
+            font-weight: 400;
+            src: local(''),
+                url('/media/fonts/MAGIC NIGHT.woff') format('woff');
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Super Funky';
+            font-weight: 400;
+            font-style: normal;
+            color: white;
+        }
+
+        h1 {
+            font-size: 100px;
+            margin: 0;
+        }
+
+        h2 {
+            font-size: 60px;
+        }
+
+        h3 {
+            font-size: 40px;
+        }
+
+        h4 {
+            font-size: 25px;
+            font-family: 'Kalam';
+            color: whitesmoke;
+            margin: 0;
+        }
+
+        button {
+            margin: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            border-radius: 5px;
+            background-color: transparent;
+            color: #20232a;
+            font-size: 16px;
+            cursor: pointer;
+            color: white;
+            font-family: 'Press Start 2P';
+            /* transition: all 0.5s;
+            transition-timing-function: ease-out; */
+        }
+
+        .center {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
         }
 
         #score {
@@ -32,9 +106,23 @@
 <body>
     <canvas id="gameCanvas"></canvas>
 
-    <audio id="music1">
-        <source src="media/musics/music1.mp3" type="audio/mpeg">
-    </audio>
+    <div id="initialScreen" class="center">
+        <h1>Hit Mind</h1>
+        <h4>Vai encarar o desafio??</h4>
+
+        <br>
+        <br>
+
+        <button id="play">Iniciar jogo</button>
+    </div>
+
+    <div id="finalScreen" class="center" style="display: none;">
+        <h2 id="finalTitle"></h2>
+
+        <h3 id="finalScore"></h3>
+
+        <button id="playAgain">Jogar novamente</button>
+    </div>
 
     <script src="script.js"></script>
     <script src="beatmap.js"></script>
